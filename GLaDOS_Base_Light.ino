@@ -1,7 +1,8 @@
+#include <Wire.h>
 #include "FastLED.h"
-//#include "global_def.h"
-//#include "functions.h"
-//#include <TimerOne.h>
+#include "global_def.h"
+#include "functions.h"
+#include <TimerOne.h>
 
 FASTLED_USING_NAMESPACE
 
@@ -32,11 +33,21 @@ uint8_t RED_BRIGHTNESS = 64;
 uint8_t RED_FADEAMOUNT = 1;
 // EL-Wire Pin (yellow light cable)
 #define ELWIRE_PIN 5
-uint8_t ELWIRE_BRIGHTNESS = 250;
+uint8_t ELWIRE_BRIGHTNESS = 255;
 uint8_t ELWIRE_FADEAMOUNT = 1;
+
+#define I2C_SLAVE_ADDRESS 0xbe
+int number = 0;
+int state = 0;
 
 void setup() {
   delay(1000); // 3 second delay for recovery
+  
+  // initialize i2c as slave
+  Wire.begin(I2C_SLAVE_ADDRESS);
+  // define callbacks for i2c communication
+  Wire.onReceive(receiveData);
+  Wire.onRequest(sendData);
   
   // tell FastLED about the LED strip configuration
   FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds_ring, NUM_LEDS).setCorrection(TypicalLEDStrip);
@@ -51,8 +62,8 @@ void setup() {
   /**
    * LED Matrix 5x11 Setup
    **/
-  //configure_pinning(8,7,9);
-  //matrix_init();  
+  configure_pinning(8,7,9);
+  matrix_init();  
 }
 
 
@@ -73,7 +84,7 @@ void loop()
   // insert a delay to keep the framerate modest
   FastLED.delay(1000/FRAMES_PER_SECOND); 
   // do some periodic updates
-  EVERY_N_MILLISECONDS( 2 ) { gHue++; } // slowly cycle the "base color" through the rainbow
+  EVERY_N_MILLISECONDS( 10 ) { gHue++; } // slowly cycle the "base color" through the rainbow
   EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
 
   // red leds updates
@@ -81,7 +92,7 @@ void loop()
   analogWrite(RED_PIN, RED_BRIGHTNESS);
 
   // el-wire updates
-  EVERY_N_MILLISECONDS( 500 ) { elwire_fade(); }
+  //EVERY_N_MILLISECONDS( 500 ) { elwire_fade(); }
   analogWrite(ELWIRE_PIN, ELWIRE_BRIGHTNESS);
   
   
@@ -96,6 +107,10 @@ void loop()
     insertLetter(i, 100);
   }
   */
+  for (int i = 0; i < MATRIX_WIDTH; i++)
+  {
+	  matrix[0][i] = true;
+  }
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
@@ -186,7 +201,37 @@ void elwire_fade()
   ELWIRE_BRIGHTNESS = ELWIRE_BRIGHTNESS + ELWIRE_FADEAMOUNT;
 
   // reverse the direction of the fading at the ends of the fade:
+  // 180 -255
   if (ELWIRE_BRIGHTNESS == 180 || ELWIRE_BRIGHTNESS == 255) {
     ELWIRE_FADEAMOUNT = -ELWIRE_FADEAMOUNT ;
   }
+}
+
+/**
+ + I2C Stuff
+ **/
+// callback for received data
+void receiveData(int byteCount){
+
+  while(Wire.available()) {
+    number = Wire.read();
+    Serial.print("data received: ");
+    Serial.println(number);
+
+    if (number == 1){
+      if (state == 0){
+        digitalWrite(13, HIGH); // set the LED on
+        state = 1;
+      }
+      else{
+        digitalWrite(13, LOW); // set the LED off
+        state = 0;
+      }
+    }
+  }
+}
+
+// callback for sending data
+void sendData(){
+  Wire.write(number);
 }
