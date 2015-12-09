@@ -1,4 +1,9 @@
 #include "functions.h"
+char*	message_to_display;
+int		letter_delay;
+int		current_char;
+int		shift_counter;
+bool	message_done = true;
 
 void matrix_init() {
 
@@ -21,6 +26,17 @@ void matrix_init() {
 void updateDisplay() {
 	iteration++;
 	displayMatrix();
+
+	if (message_to_display[current_char] != 0) {
+		int successfully_inserted_letter = insertLetter(message_to_display[current_char], letter_delay);
+		if (successfully_inserted_letter != 0) {
+			current_char++;
+		}
+	}
+	else {
+		current_char = 0;
+		message_done = true;
+	}
 }
 
 void configure_pinning(uint8_t new_latch_pin, uint8_t new_clock_pin, uint8_t new_data_pin) {
@@ -29,9 +45,9 @@ void configure_pinning(uint8_t new_latch_pin, uint8_t new_clock_pin, uint8_t new
 	data_pin	= new_data_pin;
 }
 
-void shift_Matrix_left(int delay_iteration, int ammount) {
+bool shift_Matrix_left(int delay_iteration, int ammount) {
 
-	for (int counter = 0; counter < ammount; counter++) {
+	if (iteration % delay_iteration == 0) {
 		// Copy the first element into a buffer
 		for (int i = 0; i < MATRIX_HEIGHT; i++) {
 			matrix_slice[i][0] = matrix[i][0];
@@ -46,7 +62,14 @@ void shift_Matrix_left(int delay_iteration, int ammount) {
 		for (int i = 0; i < MATRIX_HEIGHT; i++) {
 			matrix[i][MATRIX_WIDTH+MATRIX_BUFFER-1] = matrix_slice[i][0];
 		}
-		delay(delay_iteration);
+		shift_counter++;
+	}
+	if (shift_counter == ammount) {
+		shift_counter = 0;
+		return true;
+	}
+	else {
+		return false;
 	}
 }
 
@@ -107,44 +130,34 @@ int insertLetter(int letter, int delay_ms) {
 			}
 		}
 	}
-	shift_Matrix_left(delay_ms, max_width);
+	bool shift_completed = shift_Matrix_left(delay_ms, max_width);
+	if (shift_completed) {
+		// Write letter into Matrix
+		for (int i = 0; i < LETTER_HEIGHT; i++) {
+			current_nibble = (current_letter >> (offset - (LETTER_WIDTH * i))) & 0x1f;
 
-	// Write letter into Matrix
-	for (int i = 0; i < LETTER_HEIGHT; i++){
-		current_nibble = (current_letter >> (offset - (LETTER_WIDTH * i))) & 0x1f;
-
-		for (int j = 0; j < LETTER_WIDTH; j++)
-		{	
-			if (j < LETTER_WIDTH - max_width) {
-				// empty space in front of the current letter, don't write anything into the matrix
-			}
-			else {
-				// Bits representing the pixels of each letter, make sure to write this into the matrix
-				matrix[i][MATRIX_WIDTH - 1 + j] = (current_nibble >> (LETTER_WIDTH - 1 - j)) & 0x01;
+			for (int j = 0; j < LETTER_WIDTH; j++)
+			{
+				if (j < LETTER_WIDTH - max_width) {
+					// empty space in front of the current letter, don't write anything into the matrix
+				}
+				else {
+					// Bits representing the pixels of each letter, make sure to write this into the matrix
+					matrix[i][MATRIX_WIDTH - 1 + j] = (current_nibble >> (LETTER_WIDTH - 1 - j)) & 0x01;
+				}
 			}
 		}
+		return max_width;
+	} else {
+		return 0;
 	}
 	
-	return max_width;
-}
-
-void insertSpace() {
-	for (int i = 0; i < MATRIX_HEIGHT; i++)
-	{
-		matrix[i][MATRIX_WIDTH+MATRIX_BUFFER-1] = 0;
-	}
 }
 
 void displayMessage(char* message, int delay_iteration) {
-	int i = 0;
-	uint8_t letter_width = 0;
 
-		//Serial.println("Trying to print Message.");
-		while (message[i] != 0)
-		{
-
-			insertLetter(message[i], delay_iteration);
-			insertLetter(36, delay_iteration);
-			i++;
-		}
+	message_to_display	= message;
+	letter_delay		= delay_iteration;
+	current_char		= 0;
+	message_done		= false;
 }

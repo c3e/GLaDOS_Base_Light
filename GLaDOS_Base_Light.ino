@@ -97,7 +97,9 @@ void loop()
   
   
   // led matrix 5x11 updates
-  //displayMessage("ES KANN NUR EINEN GEBEN!  ",55);
+  if (message_done) {
+	  displayMessage("W I L L  I T  B L E N D ? ", 55);
+  }
   /*
   EVERY_N_MILLISECONDS(3){
     iteration++;
@@ -107,10 +109,10 @@ void loop()
     insertLetter(i, 100);
   }
   */
-  for (int i = 0; i < MATRIX_WIDTH; i++)
+  /*for (int i = 0; i < MATRIX_WIDTH; i++)
   {
 	  matrix[0][i] = true;
-  }
+  }*/
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
