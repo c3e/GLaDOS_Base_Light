@@ -5,7 +5,7 @@ void matrix_init() {
 //#if !defined FASTLED_VERSION
 //	Timer1.initialize(5000);					// initialize timer1, and set a 3 milli second period
 //#endif
-//	Timer1.attachInterrupt(updateDisplay);		// attaches callback() as a timer overflow interrupt
+	Timer1.attachInterrupt(updateDisplay);		// attaches callback() as a timer overflow interrupt
 
 	pinMode(latch_pin, OUTPUT);
 	pinMode(clock_pin, OUTPUT);
