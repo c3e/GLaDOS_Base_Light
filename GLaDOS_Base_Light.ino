@@ -6,15 +6,6 @@
 
 FASTLED_USING_NAMESPACE
 
-// FastLED "100-lines-of-code" demo reel, showing just a few 
-// of the kinds of animation patterns you can quickly and easily 
-// compose using FastLED.  
-//
-// This example also shows one easy way to define multiple 
-// animations patterns and have them automatically rotate.
-//
-// -Mark Kriegsman, December 2014
-
 #if FASTLED_VERSION < 3001000
 #error "Requires FastLED 3.1 or later; check github for latest code."
 #endif
@@ -23,8 +14,8 @@ FASTLED_USING_NAMESPACE
 #define LED_TYPE    WS2812B
 #define COLOR_ORDER GRB
 #define NUM_LEDS    12
-#define BRIGHTNESS          255
-#define FRAMES_PER_SECOND   60
+#define BRIGHTNESS  128
+#define FRAMES_PER_SECOND 60
 CRGB leds_ring[NUM_LEDS];
 
 // Red dot leds Pin (body & cubes)
@@ -113,6 +104,7 @@ void loop()
   {
 	  matrix[0][i] = true;
   }*/
+
 }
 
 #define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
